@@ -1,0 +1,26 @@
+# Environment / secrets
+.env
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python build artefacts
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# Tooling / editor / local config
+.serena/
+.claude/
+.idea/
+.vscode/
+.DS_Store
+
+# Planning / design notes (local only)
+01_piano_implementazione.md
+02_chiarimenti.md
