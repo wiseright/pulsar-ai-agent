@@ -11,12 +11,38 @@ Interactive TUI:
 import sys
 
 
+def _has_api_key() -> bool:
+    """True if an Anthropic API key is available.
+
+    Importing config triggers `load_dotenv()`, so a key set in a local `.env`
+    counts here just as an exported environment variable does.
+    """
+    import os
+
+    from . import config  # noqa: F401 — imported for its load_dotenv() side effect
+
+    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+
+
+def _api_key_error() -> int:
+    """Print a friendly message when the API key is missing; return exit code 2."""
+    print("error: ANTHROPIC_API_KEY is not set.", file=sys.stderr)
+    print("The agent needs it to call Claude. Set it via a local .env file:", file=sys.stderr)
+    print("    cp .env.example .env      # then edit .env and set your key", file=sys.stderr)
+    print("or export it for this shell:", file=sys.stderr)
+    print("    export ANTHROPIC_API_KEY=sk-ant-...", file=sys.stderr)
+    print("(The offline test suite does not need a key.)", file=sys.stderr)
+    return 2
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
 
     # Interactive TUI mode: `--tui [agent_name]`
     if argv and argv[0] == "--tui":
         agent_name = argv[1] if len(argv) > 1 else "run_agent"
+        if not _has_api_key():
+            return _api_key_error()
         try:
             from .frontends.tui import run_tui
         except ImportError:
@@ -33,6 +59,9 @@ def main(argv: list[str] | None = None) -> int:
 
     agent_name = argv[0]
     prompt = " ".join(argv[1:])
+
+    if not _has_api_key():
+        return _api_key_error()
 
     # Imported here so `--help`-style misuse doesn't require the anthropic SDK.
     from .frontends.console import run_console

@@ -475,3 +475,18 @@ def test_spawn_agent_distils_worker_result(isolated_memory):
     # The worker's own internal events never leaked into the parent stream.
     assert not any(getattr(e, "name", "") == "read_file" for e in events)
     assert events[-1].kind == "agent_finished"
+
+
+# ---------------------------------------------------------------------------
+# CLI entry point: a missing API key fails cleanly, not with a traceback.
+# ---------------------------------------------------------------------------
+def test_main_without_api_key_exits_cleanly(monkeypatch, capsys):
+    from pulsar import __main__
+
+    # Simulate a fresh user who has not set the key (no .env, nothing exported).
+    monkeypatch.setattr(__main__, "_has_api_key", lambda: False)
+    code = __main__.main(["run_agent", "hello"])
+    assert code == 2
+    err = capsys.readouterr().err
+    assert "ANTHROPIC_API_KEY is not set" in err
+    assert ".env" in err
